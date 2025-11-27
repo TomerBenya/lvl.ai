@@ -449,4 +449,107 @@ For support and questions:
 
 ---
 
+## 👥 Friends Feature Implementation (Assignment 2)
+
+This section documents the **Friends Feature** implementation added as part of the Foundations of Networks Assignment 2.
+
+### Feature Overview
+
+The Friends Feature provides a complete social networking system within LVL.AI, allowing users to:
+- Search for other users by name or email
+- Send, accept, and decline friend requests
+- View a friends list with XP and level information
+- Block and unblock users
+- See a friends leaderboard ranking friends by XP
+
+### Files Added
+
+#### Backend
+| File | Description |
+|------|-------------|
+| `backend/src/routes/userRoutes.ts` | Added `GET /api/users/search` endpoint for user search |
+| `backend/src/routes/friendRoutes.ts` | Added `GET /api/friends/blocked` endpoint for blocked users |
+| `backend/scripts/seedUsers.ts` | Seed script to create test users for testing |
+
+#### Frontend
+| File | Description |
+|------|-------------|
+| `frontend/src/app/friends/page.tsx` | Main friends page with tabbed interface |
+| `frontend/src/components/friends/FriendCard.tsx` | Reusable user card component |
+| `frontend/src/components/friends/FriendsList.tsx` | Display list of friends with remove/block actions |
+| `frontend/src/components/friends/FriendRequestsList.tsx` | Display pending friend requests with accept/decline |
+| `frontend/src/components/friends/SentRequestsList.tsx` | Display sent friend requests |
+| `frontend/src/components/friends/BlockedUsersList.tsx` | Display blocked users with unblock action |
+| `frontend/src/components/friends/AddFriendModal.tsx` | Modal for searching and adding friends |
+| `frontend/src/components/friends/FriendsLeaderboard.tsx` | Leaderboard showing friends ranked by XP |
+| `frontend/src/components/friends/index.ts` | Export file for all friend components |
+| `frontend/src/hooks/useFriends.ts` | Custom hook for friends state management |
+| `frontend/src/lib/api/users.ts` | Added `searchUsers` method |
+| `frontend/src/lib/api/friends.ts` | Added `getBlockedUsers` method |
+
+### API Endpoints Added
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users/search?q=<query>` | Search users by name or email (partial match) |
+| GET | `/api/friends/blocked` | Get list of blocked users |
+
+### How to Test the Feature
+
+1. **Create test users** by running the seed script:
+   ```bash
+   cd backend
+   npx ts-node scripts/seedUsers.ts
+   ```
+
+2. **Test users created** (all with password: `password123`):
+   - alice@test.com (Level 5, 450 XP)
+   - bob@test.com (Level 3, 280 XP)
+   - charlie@test.com (Level 7, 720 XP)
+   - diana@test.com (Level 2, 150 XP)
+   - edward@test.com (Level 10, 1200 XP)
+   - fiona@test.com (Level 4, 380 XP)
+   - george@test.com (Level 6, 550 XP)
+   - hannah@test.com (Level 1, 50 XP)
+
+3. **Test the friends feature**:
+   - Login with one account (e.g., alice@test.com)
+   - Navigate to the Friends page via the sidebar
+   - Click "Add Friend" to search for users
+   - Send friend requests to other test users
+   - Login with a different account to accept/decline requests
+   - Test removing friends and blocking users
+   - View the Friends Leaderboard
+
+### Testing Checklist
+
+- [x] User search works with partial name/email matching
+- [x] Can send friend requests
+- [x] Can accept friend requests
+- [x] Can decline friend requests
+- [x] Can view friends list with level and XP
+- [x] Can remove friends
+- [x] Can block users
+- [x] Can unblock users
+- [x] Friends leaderboard shows correct ranking
+- [x] Tab badges show correct counts
+- [x] Error handling and loading states work correctly
+
+### Assumptions and Design Decisions
+
+1. **Search requires 2+ characters**: To prevent excessive API calls and results
+2. **Blocked users are hidden from search**: Users you've blocked or who have blocked you won't appear in search results
+3. **Friend actions require confirmation**: Remove and block actions show confirmation buttons to prevent accidental clicks
+4. **Friends leaderboard shows top 5**: Limited to 5 to keep the UI clean while showing your rank
+5. **Backend already had friends routes**: The backend API was already implemented; this feature adds the missing frontend UI
+
+### Challenges Faced
+
+1. **TypeScript strict mode**: Required careful typing of error handlers and API responses
+2. **Radix UI Tabs**: Used Radix UI tabs for a clean, accessible tabbed interface
+3. **State management**: Created a comprehensive `useFriends` hook to manage all friend-related state and API calls
+4. **Search debouncing**: Implemented 300ms debounce to prevent excessive API calls during typing
+
+---
+
 **Built with ❤️ using modern web technologies**

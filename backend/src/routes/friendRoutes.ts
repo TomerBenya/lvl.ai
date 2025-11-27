@@ -14,7 +14,7 @@ router.post('/request', authenticate, [
 ], async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { recipientId } = req.body;
-    const requesterId = (req as any).user['id'];
+    const requesterId = (req as any).user['_id'];
 
     // Check if recipient exists
     const recipient = await User.findById(recipientId);
@@ -75,7 +75,7 @@ router.put('/accept/:userId', authenticate, [
 ], async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
-    const currentUserId = (req as any).user['id'];
+    const currentUserId = (req as any).user['_id'];
 
     const currentUser = await User.findById(currentUserId);
     if (!currentUser) {
@@ -123,7 +123,7 @@ router.put('/decline/:userId', authenticate, [
 ], async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
-    const currentUserId = (req as any).user['id'];
+    const currentUserId = (req as any).user['_id'];
 
     const currentUser = await User.findById(currentUserId);
     if (!currentUser) {
@@ -159,14 +159,17 @@ router.put('/decline/:userId', authenticate, [
 // @access  Private
 router.get('/', authenticate, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req as any).user['id'];
+    const userId = (req as any).user['_id'];
 
-    const user = await User.findById(userId).populate('friends', 'name email avatar');
+    const user = await User.findById(userId).populate('friends', 'name email avatar level xp');
+    if (!user) {
+      throw new CustomError('User not found', 404);
+    }
 
     res.status(200).json({
       success: true,
-      count: user!.friends.length,
-      data: user!.friends
+      count: user.friends.length,
+      data: user.friends
     });
   } catch (error) {
     next(error);
@@ -178,14 +181,17 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
 // @access  Private
 router.get('/pending', authenticate, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req as any).user['id'];
+    const userId = (req as any).user['_id'];
 
-    const user = await User.findById(userId).populate('friendRequests.received', 'name email avatar');
+    const user = await User.findById(userId).populate('friendRequests.received', 'name email avatar level xp');
+    if (!user) {
+      throw new CustomError('User not found', 404);
+    }
 
     res.status(200).json({
       success: true,
-      count: user!.friendRequests.received.length,
-      data: user!.friendRequests.received
+      count: user.friendRequests.received.length,
+      data: user.friendRequests.received
     });
   } catch (error) {
     next(error);
@@ -197,14 +203,39 @@ router.get('/pending', authenticate, async (req: Request, res: Response, next: N
 // @access  Private
 router.get('/sent', authenticate, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req as any).user['id'];
+    const userId = (req as any).user['_id'];
 
-    const user = await User.findById(userId).populate('friendRequests.sent', 'name email avatar');
+    const user = await User.findById(userId).populate('friendRequests.sent', 'name email avatar level xp');
+    if (!user) {
+      throw new CustomError('User not found', 404);
+    }
 
     res.status(200).json({
       success: true,
-      count: user!.friendRequests.sent.length,
-      data: user!.friendRequests.sent
+      count: user.friendRequests.sent.length,
+      data: user.friendRequests.sent
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @route   GET /api/friends/blocked
+// @desc    Get blocked users
+// @access  Private
+router.get('/blocked', authenticate, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = (req as any).user['_id'];
+
+    const user = await User.findById(userId).populate('blockedUsers', 'name email avatar');
+    if (!user) {
+      throw new CustomError('User not found', 404);
+    }
+
+    res.status(200).json({
+      success: true,
+      count: user.blockedUsers.length,
+      data: user.blockedUsers
     });
   } catch (error) {
     next(error);
@@ -219,7 +250,7 @@ router.delete('/:userId', authenticate, [
 ], async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
-    const currentUserId = (req as any).user['id'];
+    const currentUserId = (req as any).user['_id'];
 
     const currentUser = await User.findById(currentUserId);
     if (!currentUser) {
@@ -257,7 +288,7 @@ router.put('/block/:userId', authenticate, [
 ], async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
-    const currentUserId = (req as any).user['id'];
+    const currentUserId = (req as any).user['_id'];
 
     // Check if target user exists
     const targetUser = await User.findById(userId);
@@ -322,7 +353,7 @@ router.put('/unblock/:userId', authenticate, [
 ], async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
-    const currentUserId = (req as any).user['id'];
+    const currentUserId = (req as any).user['_id'];
 
     const currentUser = await User.findById(currentUserId);
     if (!currentUser) {

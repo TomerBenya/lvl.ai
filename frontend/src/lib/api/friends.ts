@@ -66,6 +66,16 @@ export class FriendsAPI {
     throw new Error('Failed to fetch sent requests');
   }
 
+  // @route   GET /api/friends/blocked
+  // @desc    Get blocked users
+  static async getBlockedUsers(): Promise<User[]> {
+    const response: AxiosResponse<{ success: boolean; count: number; data: User[] }> = await apiClient.client.get('/friends/blocked');
+    if (response.data.success) {
+      return response.data.data;
+    }
+    throw new Error('Failed to fetch blocked users');
+  }
+
   // @route   DELETE /api/friends/:userId
   // @desc    Remove friend
   static async removeFriend(userId: string): Promise<{ message: string }> {

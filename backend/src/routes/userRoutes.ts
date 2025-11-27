@@ -49,7 +49,7 @@ router.get('/', authenticate, authorize('admin'), [
 // @access  Private
 router.get('/profile/me', authenticate, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req as any).user['id'];
+    const userId = (req as any).user['_id'];
     const user = await User.findById(userId)
       .select('-password -emailVerificationToken -passwordResetToken -passwordResetExpires')
       .populate('friends', 'name email avatar')
@@ -63,6 +63,59 @@ router.get('/profile/me', authenticate, async (req: Request, res: Response, next
     res.status(200).json({
       success: true,
       data: user
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @route   GET /api/users/search
+// @desc    Search users by name or email
+// @access  Private
+router.get('/search', authenticate, [
+  query('q').notEmpty().withMessage('Search query is required').isLength({ min: 2 }).withMessage('Search query must be at least 2 characters')
+], async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const searchQuery = req.query['q'] as string;
+    const currentUserId = (req as any).user['_id'];
+
+    // Get current user to check blocked users
+    const currentUser = await User.findById(currentUserId);
+    if (!currentUser) {
+      throw new CustomError('User not found', 404);
+    }
+
+    // Build search query - search by name or email with partial matching (case-insensitive)
+    const searchRegex = new RegExp(searchQuery, 'i');
+
+    // Get IDs to exclude: current user + blocked users + users who blocked current user
+    const excludeIds = [
+      currentUserId,
+      ...currentUser.blockedUsers.map(id => id.toString())
+    ];
+
+    // Find users who have blocked the current user
+    const usersWhoBlockedMe = await User.find({ blockedUsers: currentUserId }).select('_id').lean();
+    excludeIds.push(...usersWhoBlockedMe.map(u => (u._id as { toString(): string }).toString()));
+
+    const users = await User.find({
+      $and: [
+        { _id: { $nin: excludeIds } },
+        {
+          $or: [
+            { name: searchRegex },
+            { email: searchRegex }
+          ]
+        }
+      ]
+    })
+      .select('_id name email avatar level xp')
+      .limit(20);
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users
     });
   } catch (error) {
     next(error);
@@ -141,7 +194,7 @@ router.put('/profile/me', authenticate, [
   body('preferences.notificationSettings.push').optional().isBoolean().withMessage('Push notification setting must be boolean')
 ], async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req as any).user['id'];
+    const userId = (req as any).user['_id'];
     
     // Only allow updating certain fields
     const allowedFields = ['name', 'avatar', 'preferences'];

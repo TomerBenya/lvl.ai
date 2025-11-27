@@ -248,6 +248,18 @@ export class UserAPI {
     }
     throw new Error(response.data.message || 'Failed to fetch user levels');
   }
+
+  // @route   GET /api/users/search
+  // @desc    Search users by name or email
+  static async searchUsers(query: string): Promise<User[]> {
+    const response: AxiosResponse<{ success: boolean; count: number; data: User[] }> = await apiClient.client.get(
+      `/users/search?q=${encodeURIComponent(query)}`
+    );
+    if (response.data.success) {
+      return response.data.data;
+    }
+    throw new Error('Failed to search users');
+  }
 }
 
 export default UserAPI;
